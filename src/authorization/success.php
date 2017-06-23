@@ -20,7 +20,7 @@
   <body>
     <main>
       <p>¡Bienvenido <?php echo $user; ?>! Su token temporal de acceso es:</p>
-      <p><?php echo $token; ?></p>
+      <p><?php echo $token['access_token']; ?></p>
       <p>Este token es válido hasta:</p>
       <p>EXPIRATION DATE</p>
   </main>

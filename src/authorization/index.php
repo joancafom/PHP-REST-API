@@ -9,6 +9,10 @@
 
   $nombreFabricante = isset($_SESSION['nombreFabricante']) ? $_SESSION['nombreFabricante'] : '';
 
+  if (isset($_SESSION['erroresLogin'])) {
+    $erroresLogin = $_SESSION['erroresLogin'];
+  }
+
 ?>
 <html lang="es">
   <head>
@@ -16,6 +20,25 @@
     <title>Joscarfom - Obtener Autorización</title>
   </head>
   <body>
+
+    <?php
+
+      if(isset($erroresLogin)){
+
+        echo "<header>";
+
+        foreach ($erroresLogin as $error) {
+          
+          echo $error;
+
+        }
+
+        echo "</header>";
+
+      }
+
+    ?>
+
     <main>
       <p>Inicia sesión para obtener un token temporal</p>
       <form action="obtainToken.php" method="get">
