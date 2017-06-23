@@ -1,8 +1,8 @@
-INSERT INTO FABRICANTES (NOMBRE, DIRECCION, TLF, PAIS) VALUES ('Apple Inc.', '1 Infinite Loop, California', '+1987654320', 'USA');
-INSERT INTO FABRICANTES (NOMBRE, DIRECCION, TLF, PAIS) VALUES ('BQ', 'Las Rozas, Madrid', '+34911829384', 'ESP');
-INSERT INTO FABRICANTES (NOMBRE, DIRECCION, TLF, PAIS) VALUES ('Huawei', 'Longgang, Shenzhen', '+86987654321', 'CHN');
-INSERT INTO FABRICANTES (NOMBRE, DIRECCION, TLF, PAIS) VALUES ('LG Electronics', 'LG Twin Towers, Seul', '+82987654322', 'KOR');
-INSERT INTO FABRICANTES (NOMBRE, DIRECCION, TLF, PAIS) VALUES ('Samsung Mobile', 'Samsung Town, Seul', '+82987654323', 'KOR');
+INSERT INTO FABRICANTES (NOMBRE, DIRECCION, TLF, PAIS, PASSWORD) VALUES ('Apple Inc.', '1 Infinite Loop, California', '+1987654320', 'USA','apple1234');
+INSERT INTO FABRICANTES (NOMBRE, DIRECCION, TLF, PAIS, PASSWORD) VALUES ('BQ', 'Las Rozas, Madrid', '+34911829384', 'ESP', 'bq1234');
+INSERT INTO FABRICANTES (NOMBRE, DIRECCION, TLF, PAIS, PASSWORD) VALUES ('Huawei', 'Longgang, Shenzhen', '+86987654321', 'CHN', 'huawei1234');
+INSERT INTO FABRICANTES (NOMBRE, DIRECCION, TLF, PAIS, PASSWORD) VALUES ('LG Electronics', 'LG Twin Towers, Seul', '+82987654322', 'KOR', 'lgelectronics1234');
+INSERT INTO FABRICANTES (NOMBRE, DIRECCION, TLF, PAIS, PASSWORD) VALUES ('Samsung Mobile', 'Samsung Town, Seul', '+82987654323', 'KOR', 'samsungmobile1234');
 
 
 
@@ -19,4 +19,4 @@ INSERT INTO DISPOSITIVOS VALUES ('Google', 'Galaxy Nexus', 'Midnight Black', 16,
 
 --Oauth 2.0
 
-INSERT INTO oauth_clients (client_id, client_secret, redirect_uri) VALUES ('testClient', 'testPassword', 'http://localhost/API/oauth2/oauth2callback.php');
+INSERT INTO oauth_clients (client_id, client_secret, redirect_uri) VALUES ('authorizerForm', 'authorizerFormSecret', 'http://localhost/API/oauth2/oauth2callback.php');

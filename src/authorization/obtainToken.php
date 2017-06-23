@@ -1,24 +1,29 @@
 <?php
+  
+  session_start();
 
-  require_once('BD/gestionBD.php');
-  require_once('login/gestionLogin.php');
+  require_once('../BD/gestionBD.php');
+  require_once('../login/gestionLogin.php');
 
   if( !isset($_SESSION['clientId']) || !isset($_SESSION['clientSecret']) || !isset($_REQUEST['nombreFabricante']) || !isset($_REQUEST['password']) ){
     header('Location: index.php');
     die();
   }
 
-  $clientId = $_SESSION['clientId']);
-  $clientSecret = $_SESSION['clientSecret']);
-  $nombreFabricante = $_REQUEST['nombreFabricante']);
-  $password = $_REQUEST['password']);
+  $clientId = $_SESSION['clientId'];
+  $clientSecret = $_SESSION['clientSecret'];
+  $nombreFabricante = $_REQUEST['nombreFabricante'];
+  $password = $_REQUEST['password'];
+
+  unset($_SESSION['clientId']);
+  unset($_SESSION['clientSecret']);
 
   $conexion = crearConexionBD();
 
   $exitoLogin = consultaLogin($conexion, $nombreFabricante, $password);
 
   if(!$exitoLogin){
-    $_SESSION['erroresLogin']) = '<p>El usuario o la contraseña proporcionados no son correctos</p>';
+    $_SESSION['erroresLogin'] = '<p>El usuario o la contraseña proporcionados no son correctos</p>';
     header('Location: index.php');
     die();
   }
@@ -28,13 +33,16 @@
   $resultado = performCurlCommand($clientId, $clientSecret);
 
   if($resultado == null){
-    $_SESSION['erroresLogin']) = '<p>Ha ocurrido un error al intentar obtener el token. Puede que el clientId o clientSecret sean erróneos.</p>';
+    $_SESSION['erroresLogin'] = '<p>Ha ocurrido un error al intentar obtener el token. Puede que el clientId o clientSecret sean erróneos.</p>';
     header('Location: index.php');
     die();
   }
 
   $token = json_decode($resultado);
   //->{''}
+
+  $_SESSION['user'] = $nombreFabricante;
+  $_SESSION['token'] = $token;
 
   header('Location: success.php');
 
