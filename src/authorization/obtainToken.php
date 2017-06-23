@@ -28,7 +28,7 @@
     die();
   }
 
-  cerrarConexionBD();
+  cerrarConexionBD($conexion);
 
   $resultado = performCurlCommand($clientId, $clientSecret);
 
@@ -38,7 +38,7 @@
     die();
   }
 
-  $token = json_decode($resultado);
+  $token = json_decode($resultado, true);
   //->{''}
 
   $_SESSION['user'] = $nombreFabricante;
@@ -54,7 +54,7 @@
 
     $ch = curl_init();
 
-    curl_setopt($ch, CURLOPT_URL, "http://localhost/API/OAuth2Common/token.php");
+    curl_setopt($ch, CURLOPT_URL, "http://localhost/PHP_API/OAuth2Common/token.php");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, "grant_type=client_credentials");
     curl_setopt($ch, CURLOPT_POST, 1);
@@ -66,7 +66,7 @@
 
     $result = curl_exec($ch);
 
-    if (curl_errno($ch)) {
+    if (curl_errno($ch) || (strpos($result, '404') !== false)) {
       $result = null;
     }
 
