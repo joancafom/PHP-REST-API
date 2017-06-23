@@ -1,17 +1,17 @@
 <?php
 
   require_once('BD/gestionBD.php');
-  require_once('loguin/gestionLogin.php');
+  require_once('login/gestionLogin.php');
 
-  if( !isset($_SESSION['clientId']) || isset($_SESSION['clientSecret']) || isset($_REQUEST['nombreFabricante']) || isset($_REQUEST['password']) ){
+  if( !isset($_SESSION['clientId']) || !isset($_SESSION['clientSecret']) || !isset($_REQUEST['nombreFabricante']) || !isset($_REQUEST['password']) ){
     header('Location: index.php');
     die();
   }
 
   $clientId = $_SESSION['clientId']);
   $clientSecret = $_SESSION['clientSecret']);
-  $nombreFabricante = $_SESSION['nombreFabricante']);
-  $password = $_SESSION['password']);
+  $nombreFabricante = $_REQUEST['nombreFabricante']);
+  $password = $_REQUEST['password']);
 
   $conexion = crearConexionBD();
 
