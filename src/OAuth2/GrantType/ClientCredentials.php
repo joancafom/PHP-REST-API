@@ -65,7 +65,7 @@ class ClientCredentials extends HttpBasic implements GrantTypeInterface
     {
         $this->loadClientData();
 
-        return isset($this->clientData['user_id']) ? $this->clientData['user_id'] : null;
+        return isset($_SESSION['user_id_passthrough']) ? $_SESSION['user_id_passthrough'] : ( isset($this->clientData['USER_ID']) ? $this->clientData['USER_ID'] : null );
     }
 
     /**
