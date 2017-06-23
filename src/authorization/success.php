@@ -21,8 +21,8 @@
     <main>
       <p>¡Bienvenido <?php echo $user; ?>! Su token temporal de acceso es:</p>
       <p><?php echo $token['access_token']; ?></p>
-      <p>Este token es válido hasta:</p>
-      <p>EXPIRATION DATE</p>
+      <p>Este token es válido durante:</p>
+      <p><?php echo ($token['expires_in']/60).' minutos'; ?></p>
   </main>
   </body>
 </html>
