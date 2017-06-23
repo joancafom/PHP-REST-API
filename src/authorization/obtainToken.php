@@ -30,7 +30,7 @@
 
   cerrarConexionBD($conexion);
 
-  $resultado = performCurlCommand($clientId, $clientSecret);
+  $resultado = performCurlCommand($clientId, $clientSecret, $nombreFabricante);
 
   if($resultado == null){
     $_SESSION['erroresLogin'] = '<p>Ha ocurrido un error al intentar obtener el token. Puede que el clientId o clientSecret sean erróneos.</p>';
@@ -50,7 +50,7 @@
     Métodos Auxiliares
   */
 
-  function performCurlCommand($clientId, $clientSecret){
+  function performCurlCommand($clientId, $clientSecret, $nombreFabricante){
 
     $ch = curl_init();
 
