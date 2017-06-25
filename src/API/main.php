@@ -10,8 +10,9 @@
 	$req_path = $_GET['req_path'];
 
 	if ($req_path == null) {
-		header('Location: https://es.wikipedia.org/wiki/HTTP_403');
-		die();
+		$response = new OAuth2\Response(array(),400,array());
+	 	$response->send();
+	 	die();
 	}
 
 	$ruta = explode('/', $req_path);
@@ -23,8 +24,9 @@
 	//Comprobamos que estamos accediendo a uno de los recursos disponibles en nuestra API
 
 	if(!in_array($recursoAccedido, $recursos)){
-		header('Location: https://es.wikipedia.org/wiki/HTTP_401');
-		die();
+		$response = new OAuth2\Response(array('Resource Error'=>'You must specify a valid resource'),400,array());
+	 	$response->send();
+	 	die();
 	}
 
 	//Obtenemos el método de la petición
@@ -37,7 +39,14 @@
 	switch ($metodo) {
     	case 'get':
         	$res = procesarGet($conexion, $ruta, $_GET);
-        	echo "get";
+        	if ($res[0] == 'single' && $res[1] != null) {
+        		replyToClient($res[1], 200, null);
+        	} else if($res[0] == 'collection' && $res[1] != null){
+        		replyToClient($res[1], 200, null);
+        	}else{
+        		replyToClient(null, 404, null);
+        	}
+        	
        	 	break;
 
     	case 'post':
@@ -52,7 +61,9 @@
         	echo "delete";
         	break;
     	default:
-        	echo "Not implemented yet";
+        	$response = new OAuth2\Response(array(),405,array());
+	 		$response->send();
+	 		die();
 	}
 
 	cerrarConexionBD($conexion);
@@ -78,11 +89,11 @@
 
 			//Obtenemos el usuario correspondiente al token
 			$token = $server->getAccessTokenData(OAuth2\Request::createFromGlobals());
-	 		echo "User ID associated with this token is {".$token['USER_ID']."}";
+	 		//echo "User ID associated with this token is {".$token['USER_ID']."}";
 
 	 		//Verificamos que tiene privilegios para realizar la operacion
 	 		if(!verifyPrivileges($conexion, $token['USER_ID'], $recurso, $ruta[1])){
-	 			$response = new OAuth2\Response(null,403,null);
+	 			$response = new OAuth2\Response(array('Authoritation Error' => 'You have no privileges to access to this resource'),403,array());
 	 			$response->send();
 	 			die();
 	 		}
@@ -96,8 +107,9 @@
 
 			//En nuestra API no existe esta ruta
 
-			header('Location: novalid.php');
-			die();
+			$response = new OAuth2\Response(array(),404,array());
+	 		$response->send();
+	 		die();
 		}
 		
 
@@ -159,14 +171,22 @@
 
 		}else{
 
-			//En nuestra API no existe esta ruta
+			//En nuestra API, no existe esta ruta
 
-			header('Location: novalid.php');
-			die();
+			$response = new OAuth2\Response(array(),404,array());
+	 		$response->send();
+	 		die();
 		}
 		
 
 
+	}
+
+	//Terminal Operation, sends a response to the client
+	function replyToClient($parametros = array(), $codigo = 200, $header = array()){
+		$response = new OAuth2\Response($parametros,$codigo,$header;
+	 	$response->send();
+	 	die();
 	}
 
 	function validarLimitOffset($limit, $offset){
