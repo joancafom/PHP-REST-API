@@ -1,9 +1,11 @@
 <?php
 
-  function stmtPaginado($conexion, $query, $page_number, $page_size){
+  function stmtPaginado($conexion, $query, $offset, $limit){
     try{
-      $primer = ($page_number - 1) * $page_size + 1;
-      $ultimo = $page_number * $page_size;
+
+      $primer = $offset;
+      $ultimo = $offset + $limit;
+
       $paginatedQuery = "SELECT * FROM ( "."SELECT ROWNUM RNUM, AUX.* FROM ( $query ) AUX "
                         ."WHERE ROWNUM <= :ultimo".") "."WHERE RNUM >= :primer";
       $stmt = $conexion->prepare($paginatedQuery);

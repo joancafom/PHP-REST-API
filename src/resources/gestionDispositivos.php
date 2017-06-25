@@ -1,5 +1,26 @@
 <?php
 
+	require_once '../BD/utilidades.php';
+
+	function consultaDispositivosPaginado($conexion, $page_number, $page_size){
+
+		$consulta = "SELECT * FROM DISPOSITIVOS";
+
+		try {
+
+			$stmt = stmtPaginado($conexion, $consulta, $page_number, $page_size);
+			$stmt->execute();
+
+			$total_consulta = total_consulta($conexion,$consulta,null,null);
+
+      		return array(0 => $total_consulta, 1 => $stmt);
+
+		} catch (PDOException $e) {
+			$_SESSION['excepcion'] = $e->GetMessage(); 
+			header('Location: excepcion.php');
+		}
+	}
+
 	function consultaDispositivos($conexion){
 
 		$consulta = "SELECT * FROM DISPOSITIVOS";
@@ -61,8 +82,8 @@
 
 	function actualizaDispositivo($conexion, $dispositivo){
 
-		$consulta = "UPDATE DISPOSITIVOS SET MARCA = :marca, NOMBRE = :nombre, COLOR = color, CAPACIDAD = capacidad, WHERE REFERENCIA = :referencia";
-
+		$consulta = "UPDATE DISPOSITIVOS SET MARCA = :marca, NOMBRE = :nombre, COLOR = :color, CAPACIDAD = :capacidad WHERE REFERENCIA = :referencia";
+		
 		try {
 
 			$stmt = $conexion->prepare($consulta);
@@ -89,7 +110,7 @@
 		try {
 
 			$stmt = $conexion->prepare($consulta);
-			$stmt->bindParam(':referencia', $dispositivo['referencia']);
+			$stmt->bindParam(':referencia', $referencia);
 			$stmt->execute();
 
 			//Devolvemos sólo el único resultado
