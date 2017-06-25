@@ -48,7 +48,7 @@
         	break;
 
     	case 'delete':
-        	$res = procesarDelete($conexion, $ruta);
+        	$res = procesarDelete($conexion, $ruta, $_GET, $server);
         	echo "delete";
         	break;
     	default:
@@ -58,7 +58,7 @@
 	cerrarConexionBD($conexion);
 
 	//Devuelve true o false dependiendo del resultado de la operación
-	function procesarDelete($conexion, $ruta, $parametros){
+	function procesarDelete($conexion, $ruta, $parametros, $server){
 
 		/*
 			Se supone que para acceder a esta función al menos hemos tenido que comprobar
@@ -76,14 +76,18 @@
     			die;
 			}
 
+			//Obtenemos el usuario correspondiente al token
 			$token = $server->getAccessTokenData(OAuth2\Request::createFromGlobals());
 	 		echo "User ID associated with this token is {".$token['USER_ID']."}";
 
-	 		if(!verifyPrivileges($conexion, $token['USER_ID'], $recurso, $ruta[1]){
-	 			header('Location: no_root_privileges.php');
+	 		//Verificamos que tiene privilegios para realizar la operacion
+	 		if(!verifyPrivileges($conexion, $token['USER_ID'], $recurso, $ruta[1])){
+	 			$response = new OAuth2\Response(null,403,null);
+	 			$response->send();
 	 			die();
 	 		}
 
+	 		//Realizamos la operación
 			$resultado = eliminaRecurso($conexion, $recurso, $ruta[1]);
 
 			return $resultado;

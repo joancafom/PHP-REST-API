@@ -169,9 +169,9 @@
 				$query = "SELECT * FROM FABRICANTES WHERE F_OID = :identificador AND  NOMBRE = :user_id";
 			}
 
-			$stmt = $conexion->prepare($consulta);
+			$stmt = $conexion->prepare($query);
 			$stmt->bindParam(':user_id', $user_id);
-			$stmt->bindParam(':referencia', $referencia);
+			$stmt->bindParam(':identificador', $identificador);
 			$stmt->execute();
 
 			$res = $stmt->fetch();
