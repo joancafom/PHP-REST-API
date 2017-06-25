@@ -158,4 +158,35 @@
 		}
 	}
 
+	function verifyPrivileges($conexion, $user_id, $recurso, $identificador){
+		//SELECT * FROM DISPOSITIVOS WHERE F_OID = (SELECT F_OID FROM FABRICANTES WHERE NOMBRE = 'Apple Inc.') AND REFERENCIA = '1000000000000';
+		//SELECT * FROM FABRICANTES WHERE F_OID = 1 AND  NOMBRE = 'Apple Inc.';
+		try {
+
+			if ($recurso == 'DISPOSITIVOS') {
+				$query = "SELECT * FROM DISPOSITIVOS WHERE F_OID = (SELECT F_OID FROM FABRICANTES WHERE NOMBRE = :user_id) AND REFERENCIA = :identificador";
+			} else {
+				$query = "SELECT * FROM FABRICANTES WHERE F_OID = :identificador AND  NOMBRE = :user_id";
+			}
+
+			$stmt = $conexion->prepare($consulta);
+			$stmt->bindParam(':user_id', $user_id);
+			$stmt->bindParam(':referencia', $referencia);
+			$stmt->execute();
+
+			$res = $stmt->fetch();
+
+			if(!$res){
+				return false;
+			}else{
+				return true;
+			}
+			
+		} catch (PDOException $e) {
+			return false;
+		}
+
+
+	}
+
 ?>

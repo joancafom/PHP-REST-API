@@ -1,5 +1,9 @@
 <?php
 
+	require_once "../BD/gestionBD.php";
+	require_once "../resources/gestionRecursos.php";
+	require_once "../OAuth2Common/server.php";
+
 	$recursos = array('0' => 'dispositivos', '1' => 'fabricantes');
 
 	//Obtenemos la ruta a la que se está intentando acceder por medio del parámetro req_path
@@ -28,10 +32,12 @@
 
 	//Procesamos ahora la petición dependiendo del método
 
+	$conexion = crearConexionBD();
+
 	switch ($metodo) {
     	case 'get':
-        	procesarGet($conexion, $ruta, $_GET);
-        	echo "done";
+        	$res = procesarGet($conexion, $ruta, $_GET);
+        	echo "get";
        	 	break;
 
     	case 'post':
@@ -42,12 +48,60 @@
         	break;
 
     	case 'delete':
-        	//procesarDelete($ruta);
+        	$res = procesarDelete($conexion, $ruta);
+        	echo "delete";
         	break;
     	default:
         	echo "Not implemented yet";
 	}
 
+	cerrarConexionBD($conexion);
+
+	//Devuelve true o false dependiendo del resultado de la operación
+	function procesarDelete($conexion, $ruta, $parametros){
+
+		/*
+			Se supone que para acceder a esta función al menos hemos tenido que comprobar
+			que el recurso es válido antes. Por lo tantos partimos de este supuesto.
+		*/
+
+		$recurso = strtoupper($ruta[0]);
+
+		if (count($ruta) == 2) {
+			
+			//Verificamos que existe el token y que es correcto
+			//Si no lo fuera, el propio servidor se encargaría de cancelar el procesamiento 
+			if (!$server->verifyResourceRequest(OAuth2\Request::createFromGlobals())) {
+    			$server->getResponse()->send();
+    			die;
+			}
+
+			$token = $server->getAccessTokenData(OAuth2\Request::createFromGlobals());
+	 		echo "User ID associated with this token is {".$token['USER_ID']."}";
+
+	 		if(!verifyPrivileges($conexion, $token['USER_ID'], $recurso, $ruta[1]){
+	 			header('Location: no_root_privileges.php');
+	 			die();
+	 		}
+
+			$resultado = eliminaRecurso($conexion, $recurso, $ruta[1]);
+
+			return $resultado;
+
+		} else {
+
+			//En nuestra API no existe esta ruta
+
+			header('Location: novalid.php');
+			die();
+		}
+		
+
+	}
+
+	//Devuelve un array con dos elementos:
+	// 1 =>Indica el tipo de recurso devuelto (único dispositivo o varios)
+	// 2 => El resultado
 	function procesarGet($conexion, $ruta, $parametros){
 
 		/*
@@ -75,15 +129,12 @@
 
 				$resultado = consultaRecursosPaginado($conexion, $recurso, $parametrosValidados['offset'], $parametrosValidados['limit']);
 
-				return $resultado[1];
-
 			}else{
 
 				$resultado = consultaRecursosPaginado($conexion, $recurso, 1, 10);
-
-				return $resultado[1];
-
 			}
+
+			return array('0' => 'collection', '1' => $resultado);
 
 		} else if(count($ruta) == 2){
 			
@@ -99,7 +150,7 @@
 
 			$resultado = consultaRecurso($conexion, $recurso, $identificador);
 
-			return $resultado;
+			return array('0' => 'single', '1' => $resultado);
 
 
 		}else{
