@@ -266,6 +266,8 @@ class Response implements ResponseInterface
                 }
 
                 return $xml->asXML();
+            case 'html':
+                return '';
         }
 
         throw new InvalidArgumentException(sprintf('The format %s is not supported', $format));
@@ -288,6 +290,9 @@ class Response implements ResponseInterface
                 break;
             case 'xml':
                 $this->setHttpHeader('Content-Type', 'text/xml');
+                break;
+            case 'html':
+                $this->setHttpHeader('Content-Type', 'text/html');
                 break;
         }
         // status

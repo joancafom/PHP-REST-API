@@ -10,9 +10,7 @@
 	$req_path = $_GET['req_path'];
 
 	if ($req_path == null) {
-		$response = new OAuth2\Response(array(),400,array());
-	 	$response->send();
-	 	die();
+		replyToClient(array(),400,array(), 'html');
 	}
 
 	$ruta = explode('/', $req_path);
@@ -24,9 +22,7 @@
 	//Comprobamos que estamos accediendo a uno de los recursos disponibles en nuestra API
 
 	if(!in_array($recursoAccedido, $recursos)){
-		$response = new OAuth2\Response(array('Resource Error'=>'You must specify a valid resource'),400,array());
-	 	$response->send();
-	 	die();
+		replyToClient(array(),400,array(), 'html');
 	}
 
 	//Obtenemos el método de la petición
@@ -38,13 +34,19 @@
 
 	switch ($metodo) {
     	case 'get':
+
         	$res = procesarGet($conexion, $ruta, $_GET);
+
         	if ($res[0] == 'single' && $res[1] != null) {
-        		replyToClient($res[1], 200, null);
+
+        		replyToClient($res[1], 200, array(), 'json');
+
         	} else if($res[0] == 'collection' && $res[1] != null){
-        		replyToClient($res[1], 200, null);
+
+        		replyToClient($res[1], 200, array(), 'json');
+
         	}else{
-        		replyToClient(null, 404, null);
+        		replyToClient(array(), 404, array(), 'html');
         	}
         	
        	 	break;
@@ -57,63 +59,26 @@
         	break;
 
     	case 'delete':
+
         	$res = procesarDelete($conexion, $ruta, $_GET, $server);
-        	echo "delete";
+        	
+        	if ($res) {
+
+        		replyToClient(array(), 204, array(), 'html');
+
+        	} else {
+
+        		replyToClient(array(), 404, array(), 'html');
+
+        	}
+
         	break;
+
     	default:
-        	$response = new OAuth2\Response(array(),405,array());
-	 		$response->send();
-	 		die();
+    		replyToClient(array(), 405, array(), 'html');
 	}
 
 	cerrarConexionBD($conexion);
-
-	//Devuelve true o false dependiendo del resultado de la operación
-	function procesarDelete($conexion, $ruta, $parametros, $server){
-
-		/*
-			Se supone que para acceder a esta función al menos hemos tenido que comprobar
-			que el recurso es válido antes. Por lo tantos partimos de este supuesto.
-		*/
-
-		$recurso = strtoupper($ruta[0]);
-
-		if (count($ruta) == 2) {
-			
-			//Verificamos que existe el token y que es correcto
-			//Si no lo fuera, el propio servidor se encargaría de cancelar el procesamiento 
-			if (!$server->verifyResourceRequest(OAuth2\Request::createFromGlobals())) {
-    			$server->getResponse()->send();
-    			die;
-			}
-
-			//Obtenemos el usuario correspondiente al token
-			$token = $server->getAccessTokenData(OAuth2\Request::createFromGlobals());
-	 		//echo "User ID associated with this token is {".$token['USER_ID']."}";
-
-	 		//Verificamos que tiene privilegios para realizar la operacion
-	 		if(!verifyPrivileges($conexion, $token['USER_ID'], $recurso, $ruta[1])){
-	 			$response = new OAuth2\Response(array('Authoritation Error' => 'You have no privileges to access to this resource'),403,array());
-	 			$response->send();
-	 			die();
-	 		}
-
-	 		//Realizamos la operación
-			$resultado = eliminaRecurso($conexion, $recurso, $ruta[1]);
-
-			return $resultado;
-
-		} else {
-
-			//En nuestra API no existe esta ruta
-
-			$response = new OAuth2\Response(array(),404,array());
-	 		$response->send();
-	 		die();
-		}
-		
-
-	}
 
 	//Devuelve un array con dos elementos:
 	// 1 =>Indica el tipo de recurso devuelto (único dispositivo o varios)
@@ -173,19 +138,60 @@
 
 			//En nuestra API, no existe esta ruta
 
-			$response = new OAuth2\Response(array(),404,array());
-	 		$response->send();
-	 		die();
+			replyToClient(array(),400,array(), 'html');
+		}
+
+	}
+
+	//Devuelve true o false dependiendo del resultado de la operación
+	function procesarDelete($conexion, $ruta, $parametros, $server){
+
+		/*
+			Se supone que para acceder a esta función al menos hemos tenido que comprobar
+			que el recurso es válido antes. Por lo tantos partimos de este supuesto.
+		*/
+
+		$recurso = strtoupper($ruta[0]);
+
+		if (count($ruta) == 2) {
+			
+			//Verificamos que existe el token y que es correcto
+			//Si no lo fuera, el propio servidor se encargaría de cancelar el procesamiento 
+			if (!$server->verifyResourceRequest(OAuth2\Request::createFromGlobals())) {
+    			$server->getResponse()->send();
+    			die;
+			}
+
+			//Obtenemos el usuario correspondiente al token
+			$token = $server->getAccessTokenData(OAuth2\Request::createFromGlobals());
+	 		//echo "User ID associated with this token is {".$token['USER_ID']."}";
+
+	 		//Verificamos que tiene privilegios para realizar la operacion
+	 		if(!verifyPrivileges($conexion, $token['USER_ID'], $recurso, $ruta[1])){
+	 			$response = new OAuth2\Response(array('Authoritation Error' => 'You have no privileges to access to this resource'),403,array());
+	 			$response->send();
+	 			die();
+	 		}
+
+	 		//Realizamos la operación
+			$resultado = eliminaRecurso($conexion, $recurso, $ruta[1]);
+
+			return $resultado;
+
+		} else {
+
+			//En nuestra API no existe esta ruta
+
+			replyToClient(array(),404,array(), 'html');
 		}
 		
-
 
 	}
 
 	//Terminal Operation, sends a response to the client
-	function replyToClient($parametros = array(), $codigo = 200, $header = array()){
-		$response = new OAuth2\Response($parametros,$codigo,$header;
-	 	$response->send();
+	function replyToClient($parametros = array(), $codigo = 200, $header = array(), $format){
+		$response = new OAuth2\Response($parametros,$codigo,$header);
+	 	$response->send($format);
 	 	die();
 	}
 

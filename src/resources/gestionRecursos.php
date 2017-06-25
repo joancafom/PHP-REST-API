@@ -16,7 +16,7 @@
 
 			$total_consulta = total_consulta($conexion,$consulta,null,null);
 
-      		return array(0 => $total_consulta, 1 => $stmt);
+      		return array(0 => $total_consulta, 1 => $stmt->fetchAll());
 
 		} catch (PDOException $e) {
 			$_SESSION['excepcion'] = $e->GetMessage(); 
