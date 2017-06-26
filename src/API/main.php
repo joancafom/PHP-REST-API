@@ -22,7 +22,7 @@
 	//Comprobamos que estamos accediendo a uno de los recursos disponibles en nuestra API
 
 	if(!in_array($recursoAccedido, $recursos)){
-		replyToClient(array(),400,array(), 'html');
+		replyToClient(array(),404,array(), 'html');
 	}
 
 	//Obtenemos el método de la petición
@@ -168,9 +168,7 @@
 
 	 		//Verificamos que tiene privilegios para realizar la operacion
 	 		if(!verifyPrivileges($conexion, $token['USER_ID'], $recurso, $ruta[1])){
-	 			$response = new OAuth2\Response(array('Authoritation Error' => 'You have no privileges to access to this resource'),403,array());
-	 			$response->send();
-	 			die();
+	 			replyToClient(array('Authoritation Error' => 'You have no privileges to access to this resource'),403,array(), 'json');
 	 		}
 
 	 		//Realizamos la operación
@@ -182,7 +180,7 @@
 
 			//En nuestra API no existe esta ruta
 
-			replyToClient(array(),404,array(), 'html');
+			replyToClient(array(),400,array(), 'html');
 		}
 		
 
