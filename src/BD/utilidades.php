@@ -4,7 +4,7 @@
     try{
 
       $primer = $offset;
-      $ultimo = $offset + $limit;
+      $ultimo = $offset + $limit - 1;
 
       $paginatedQuery = "SELECT * FROM ( "."SELECT ROWNUM RNUM, AUX.* FROM ( $query ) AUX "
                         ."WHERE ROWNUM <= :ultimo".") "."WHERE RNUM >= :primer";

@@ -16,7 +16,9 @@
 
 			$total_consulta = total_consulta($conexion,$consulta,null,null);
 
-      		return array(0 => $total_consulta, 1 => $stmt->fetchAll());
+			$res = resultsSimplifier($recurso, $stmt->fetchAll());
+
+      		return array(0 => $total_consulta, 1 => $res);
 
 		} catch (PDOException $e) {
 			$_SESSION['excepcion'] = $e->GetMessage(); 
@@ -156,6 +158,18 @@
 			$_SESSION['excepcion'] = $e->GetMessage(); 
 			header('Location: excepcion.php');
 		}
+	}
+
+	function resultsSimplifier($recurso, $results){
+
+		foreach ($results as $key => $value) {
+			if (is_numeric($key) || $key == 'PASSWORD') {
+				unset($results[$key]);
+			}
+		}
+		
+		return $results;
+
 	}
 
 	function verifyPrivileges($conexion, $user_id, $recurso, $identificador){
