@@ -267,7 +267,7 @@ class Response implements ResponseInterface
 
                 return $xml->asXML();
             case 'html':
-                return this->parameters;
+                return '';
         }
 
         throw new InvalidArgumentException(sprintf('The format %s is not supported', $format));
