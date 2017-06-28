@@ -52,7 +52,7 @@
        	 	break;
 
     	case 'post':
-        	//procesarPost($ruta);
+        	$res = procesarPost($conexion, $ruta, file_get_contents("php://input"));
         	break;
     	case 'put':
         	//procesarPut($ruta);
@@ -143,6 +143,68 @@
 
 	}
 
+	function procesarPost($conexion, $ruta, $bodyParams){
+
+		/*
+			Se supone que para acceder a esta función al menos hemos tenido que comprobar
+			que el recurso es válido antes. Por lo tantos partimos de este supuesto.
+		*/
+
+		$recurso = strtoupper($ruta[0]);
+
+		if ($recurso == 'DISPOSITIVOS' && count($ruta) == 1) {
+			
+			//Verificamos ahora que se adjunte un recurso en formato JSON
+			if ($bodyParams != null && strlen($bodyParams) > 0 && isValidJSON($bodyParams)) {
+
+				$json = json_decode($bodyParams, true);
+
+				//Verificamos que existe el token y que es correcto
+				//Si no lo fuera, el propio servidor se encargaría de cancelar el procesamiento 
+				if (!$server->verifyResourceRequest(OAuth2\Request::createFromGlobals())) {
+    				$server->getResponse()->send();
+    				die;
+				}
+
+				$checker = array(0 => 'referencia',1 => 'marca',2 => 'nombre',3 => 'color',4 => 'capacidad',5 => 'f_oid');
+
+				//Comprobamos que el recurso tenga todos los campos necesarios
+				foreach ($json as $key => $value) {
+
+					if(!in_array(strtolower($key), $checker)){
+						replyToClient(array('Not a Valid Device'=>'The provided device does not contain all the required fields'),400,array(), 'json');
+						break;
+					}
+
+				}
+
+				//Validamos el contenido de los campos
+				$erroresRecurso = validarRecurso($recurso, $json);
+
+				if (count($erroresRecurso) == 0) {
+					//Si no hay errores, procedemos a su inserción
+
+					return creaRecurso($conexion, $recurso, $json);
+
+				}else{
+
+					replyToClient($erroresRecurso,400,array(), 'json');
+				}
+
+			} else {
+				replyToClient(array('Malformed or Inexistent JSON'=>'The JSON provided in the Body is malformed or does not exist'),400,array(), 'json');
+			}
+			
+
+		} else {
+
+			//En nuestra API no existe esta ruta
+
+			replyToClient(array(),404,array(), 'html');
+		}
+		
+	}
+
 	//Devuelve true o false dependiendo del resultado de la operación
 	function procesarDelete($conexion, $ruta, $parametros, $server){
 
@@ -186,11 +248,84 @@
 
 	}
 
+	function isValidJSON($str) {
+   		json_decode($str);
+   		return json_last_error() == JSON_ERROR_NONE;
+	}
+
 	//Terminal Operation, sends a response to the client
 	function replyToClient($parametros = array(), $codigo = 200, $header = array(), $format){
 		$response = new OAuth2\Response($parametros,$codigo,$header);
 	 	$response->send($format);
 	 	die();
+	}
+
+	function comprobarExistencia($conexion, $recurso, $identificador){
+		//SELECT * FROM DISPOSITIVOS WHERE F_OID = (SELECT F_OID FROM FABRICANTES WHERE NOMBRE = 'Apple Inc.') AND REFERENCIA = '1000000000000';
+		//SELECT * FROM FABRICANTES WHERE F_OID = 1 AND  NOMBRE = 'Apple Inc.';
+		try {
+
+			if ($recurso == 'DISPOSITIVOS') {
+				$query = "SELECT * FROM DISPOSITIVOS WHERE REFERENCIA = :identificador";
+			} else {
+				$query = "SELECT * FROM FABRICANTES WHERE F_OID = :identificador";
+			}
+
+			$stmt = $conexion->prepare($query);
+			$stmt->bindParam(':identificador', $identificador);
+			$stmt->execute();
+
+			$res = $stmt->fetch();
+
+			if(!$res){
+				return true;
+			}else{
+				return false;
+			}
+			
+		} catch (PDOException $e) {
+			return true;
+		}
+
+
+	}
+
+	function validarRecurso($recurso, $objeto){
+		$errores = array();
+
+		if ($recurso == 'DISPOSITIVOS') {
+
+			if($objeto['capacidad'] <= 0){
+				$errores[] = 'La capacidad del dispositivo debe ser mayor que 0';
+			}
+
+			if (!preg_match('/^[0-9]{1,8}$/', $objeto['f_oid'])) {
+				$errores[] = 'El identificador del fabricante del dispositivo debe ser un número de 1 a 8 dígitos';
+			}
+
+			if(comprobarExistencia($conexion, $recurso, $objeto['referencia'])){
+				$errores[] = 'La referencia del dispositivo debe ser única y no existente';
+			}
+
+		} else {
+
+			if (!preg_match('/^[A-Z][A-Z][A-Z]$/', $objeto['pais'])) {
+				$errores[] = 'El país del fabricante debe tener 3 letras mayúsculas';
+			}
+
+			if (!preg_match('/^((\+[0-9][0-9])|(00[0-9][0-9]))?[0-9]{3,15}$/', $objeto['tlf'])) {
+				$errores[] = 'El teléfono del fabricante debe ser válido';
+			}
+
+			if (!preg_match('/^[0-9]{1,8}$/', $objeto['f_oid'])) {
+				$errores[] = 'El identificador del fabricante debe ser un número de 1 a 8 dígitos';
+			}
+
+			if(comprobarExistencia($conexion, $recurso, $objeto['f_oid'])){
+				$errores[] = 'El identificador del fabricante debe ser único y no existente';
+			}
+		}
+		
 	}
 
 	function validarLimitOffset($limit, $offset){
