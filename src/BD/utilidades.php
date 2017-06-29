@@ -70,6 +70,17 @@
       return json_last_error() == JSON_ERROR_NONE;
   }
 
+  //Comprueba el atributo 'Content-Type' del header.
+  function checkContentType($value){
+    
+    $headers =  apache_request_headers();
+    
+    if(!isset($headers['Content-Type']) || $headers['Content-Type'] != $value){
+      replyToClient(array('Wrong Content-Type'=>"The Content-Type header is either unset or different from application/json"),400,array(), 'json');
+    } 
+
+  }
+
   //Terminal Operation, sends a response to the client
   function replyToClient($parametros = array(), $codigo = 200, $header = array(), $format){
     $response = new OAuth2\Response($parametros,$codigo,$header);

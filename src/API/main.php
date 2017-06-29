@@ -53,10 +53,26 @@
        	 	break;
 
     	case 'post':
+
         	$res = procesarPost($conexion, $ruta, file_get_contents("php://input"), $server);
+
+        	if($res === True){
+        		replyToClient(array(), 201, array(), 'html');
+        	}else{
+        		replyToClient(array(), 400, array(), 'html');
+        	}
+
         	break;
     	case 'put':
-        	//procesarPut($ruta);
+
+        	$res = procesarPut($conexion, $ruta, file_get_contents("php://input"), $server);
+
+        	if($res === True){
+        		replyToClient(array(), 204, array(), 'html');
+        	}else{
+        		replyToClient(array(), 400, array(), 'html');
+        	}
+
         	break;
 
     	case 'delete':
@@ -146,6 +162,10 @@
 
 	function procesarPost($conexion, $ruta, $bodyParams, $server){
 
+		//Verificamos en primer lugar que el formato de entrada es JSON mediante el atributo Content-Type del header
+
+		checkContentType('application/json');
+
 		/*
 			Se supone que para acceder a esta función al menos hemos tenido que comprobar
 			que el recurso es válido antes. Por lo tantos partimos de este supuesto.
@@ -155,7 +175,7 @@
 
 		if ($recurso == 'DISPOSITIVOS' && count($ruta) == 1) {
 			
-			//Verificamos ahora que se adjunte un recurso en formato JSON
+			//Verificamos ahora que se adjunte un recurso en formato JSON correcto
 			if ($bodyParams != null && strlen($bodyParams) > 0 && isValidJSON($bodyParams)) {
 
 				$json = json_decode($bodyParams, true);
@@ -179,7 +199,7 @@
 				foreach ($json as $key => $value) {
 
 					if(!in_array($key, $checker)){
-						replyToClient(array('Not a Valid Device'=>'The provided device does not contain all the required fields'),400,array(), 'json');
+						replyToClient(array('Not a Valid Device'=>'The provided device does not fulfill the schema. \''.$key.'\' is not recognized'),400,array(), 'json');
 						break;
 					}
 
@@ -210,6 +230,84 @@
 			replyToClient(array(),404,array(), 'html');
 		}
 		
+	}
+
+	function procesarUpdate($conexion, $ruta, $bodyParams, $server){
+
+		//Verificamos en primer lugar que el formato de entrada es JSON mediante el atributo Content-Type del header
+
+		checkContentType('application/json');
+
+		/*
+			Se supone que para acceder a esta función al menos hemos tenido que comprobar
+			que el recurso es válido antes. Por lo tantos partimos de este supuesto.
+		*/
+
+		$recurso = strtoupper($ruta[0]);
+
+		if (count($ruta) == 1) {
+			
+			//Verificamos ahora que se adjunte un recurso en formato JSON correcto
+			if ($bodyParams != null && strlen($bodyParams) > 0 && isValidJSON($bodyParams)) {
+
+				$json = json_decode($bodyParams, true);
+
+				//Verificamos que existe el token y que es correcto
+				//Si no lo fuera, el propio servidor se encargaría de cancelar el procesamiento 
+				if (!$server->verifyResourceRequest(OAuth2\Request::createFromGlobals())) {
+    				$server->getResponse()->send();
+    				die;
+				}
+
+				//Obtenemos el usuario correspondiente al token
+				$token = $server->getAccessTokenData(OAuth2\Request::createFromGlobals());
+
+				$checker = $recurso == 'DISPOSITIVOS' ? array(0 => 'marca', 1 => 'nombre', 2 => 'color', 3 => 'capacidad') : array(0 => 'nombre', 1 => 'direccion', 2 => 'tlf', 3 => 'pais') ;
+
+				//Cambiamos todos los índices a minúscula para proceder a la comprobación
+				$json = array_change_key_case($json);
+
+				//Comprobamos que el recurso tenga todos los campos necesarios
+				foreach ($json as $key => $value) {
+
+					if(!in_array($key, $checker)){
+						replyToClient(array('Not a Valid Resource'=>'The provided resource does not fulfill the schema. \''.$key.'\' is not recognized'),400,array(), 'json');
+						break;
+					}
+
+				}
+
+				//Validamos el contenido de los campos
+				$erroresRecurso = validarRecurso($conexion, $recurso, $json);
+
+				if (count($erroresRecurso) == 0) {
+
+					//En caso de querer actualizar un dispositivo, comprobamos que estamos autorizados para ello
+					//No necesitamos verificarlo para los Fabricantes, ya que modificaremos los datos de aquel del token
+
+	 				if($recurso == 'DISPOSITIVOS' && !verifyPrivileges($conexion, $token['USER_ID'], $recurso, $json['referencia'])){
+	 					replyToClient(array('Authoritation Error' => 'You have no privileges to access to this resource'),403,array(), 'json');
+	 				}
+
+					return actualizaRecurso($conexion, $recurso, $json, $token['USER_ID']);
+
+				}else{
+
+					replyToClient($erroresRecurso,400,array(), 'json');
+				}
+
+			} else {
+				replyToClient(array('Malformed or Inexistent JSON'=>'The JSON provided in the Body is malformed or does not exist'),400,array(), 'json');
+			}
+			
+
+		} else {
+
+			//En nuestra API no existe esta ruta
+
+			replyToClient(array(),404,array(), 'html');
+		}
+
 	}
 
 	//Devuelve true o false dependiendo del resultado de la operación

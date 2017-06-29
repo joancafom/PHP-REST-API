@@ -163,7 +163,7 @@
 			$stmt = $conexion->prepare($consulta);
 
 			foreach ($objeto as $key => $value) {
-				$stmt->bindParam(':'.$key, $value);
+				$stmt->bindParam(':'.$key, $objeto[$key];
 			}
 
 			$stmt->bindParam(':clave', $clave);
