@@ -68,28 +68,62 @@
 		}
 	}
 
+	function creaDispositivo($conexion, $dispositivo, $user_id){
+
+		$consulta = "INSERT INTO DISPOSITIVOS (MARCA, NOMBRE, COLOR, CAPACIDAD, F_OID, REFERENCIA) VALUES (:marca, :nombre, :color, :capacidad, (SELECT F_OID FROM FABRICANTES WHERE NOMBRE = :user_id), :referencia)";
+
+		try {
+
+			$stmt = $conexion->prepare($consulta);
+			$stmt->bindParam(':marca', $dispositivo['marca']);
+			$stmt->bindParam(':nombre', $dispositivo['nombre']);
+			$stmt->bindParam(':color', $dispositivo['color']);
+			$stmt->bindParam(':capacidad', $dispositivo['capacidad']);
+			$stmt->bindParam(':user_id', $user_id);
+			$stmt->bindParam(':referencia', $dispositivo['referencia']);
+			$stmt->execute();
+
+			//Devolvemos sólo el único resultado
+			return true;
+
+		} catch (PDOException $e) {
+			$_SESSION['excepcion'] = $e->GetMessage(); 
+			header('Location: excepcion.php');
+		}
+	}
+
 	function creaRecurso($conexion, $recurso, $objeto){
 
-		$consulta = "INSERT INTO ".$recurso." VALUES ( ";
+		$consulta = "INSERT INTO ".$recurso." ";
 
 		$tam = count($objeto);
+		
+		$aux1 = '( ';
+		$aux2 = '( ';
+		
 		foreach ($objeto as $key => $value) {
 			$tam = $tam - 1;
-			$consulta = $consulta.":".$key;
+			
+			$aux1= $aux1.strtoupper($key);
+			$aux2= $aux2.":".$key;
 
-			if ($tam != 1) {
-				$consulta .= ", ";
+			if ($tam != 0) {
+				$aux1 .= " , ";
+				$aux2 .= " , ";
 			}
 		}
 
-		$consulta .= ')';
-
+		$aux1 .= ' )';
+		$aux2 .= ' )';
+		
+		$consulta .= $aux1." VALUES ".$aux2;
+		
 		try {
 
 			$stmt = $conexion->prepare($consulta);
 
 			foreach ($objeto as $key => $value) {
-				$stmt->bindParam(':'.$key, $value);
+				$stmt->bindParam(':'.$key, $objeto[$key]);
 			}
 
 			$stmt->execute();
@@ -99,6 +133,7 @@
 
 		} catch (PDOException $e) {
 			$_SESSION['excepcion'] = $e->GetMessage(); 
+
 			header('Location: excepcion.php');
 		}
 	}

@@ -166,7 +166,10 @@
     				die;
 				}
 
-				$checker = array(0 => 'referencia',1 => 'marca',2 => 'nombre',3 => 'color',4 => 'capacidad',5 => 'f_oid');
+				//Obtenemos el usuario correspondiente al token
+				$token = $server->getAccessTokenData(OAuth2\Request::createFromGlobals());
+
+				$checker = array(0 => 'referencia',1 => 'marca',2 => 'nombre',3 => 'color',4 => 'capacidad');
 
 				//Comprobamos que el recurso tenga todos los campos necesarios
 				foreach ($json as $key => $value) {
@@ -184,7 +187,7 @@
 				if (count($erroresRecurso) == 0) {
 					//Si no hay errores, procedemos a su inserción
 
-					return creaRecurso($conexion, $recurso, $json);
+					return creaDispositivo($conexion, $json, $token['USER_ID']);
 
 				}else{
 
@@ -278,9 +281,9 @@
 			$res = $stmt->fetch();
 
 			if(!$res){
-				return true;
-			}else{
 				return false;
+			}else{
+				return true;
 			}
 			
 		} catch (PDOException $e) {
@@ -296,15 +299,15 @@
 
 		if ($recurso == 'DISPOSITIVOS') {
 
-			if (strlen($objeto['marca'] <= 0) {
+			if (strlen($objeto['marca']) <= 0) {
 				$errores[] = 'La marca del dispositivo no debe estar vacía';
 			}
 
-			if (strlen($objeto['nombre'] <= 0) {
+			if (strlen($objeto['nombre']) <= 0) {
 				$errores[] = 'El nombre del dispositivo no debe estar vacío';
 			}
 
-			if (strlen($objeto['color'] <= 0) {
+			if (strlen($objeto['color']) <= 0) {
 				$errores[] = 'El color del dispositivo no debe estar vacío';
 			}
 
@@ -316,17 +319,17 @@
 				$errores[] = 'El identificador del fabricante del dispositivo debe ser un número de 1 a 8 dígitos';
 			}
 
-			if(strlen($objeto['referencia']) <= 0 || comprobarExistencia($conexion, $recurso, $objeto['referencia'])){
+			if(strlen($objeto['referencia']) != 13 || comprobarExistencia($conexion, $recurso, $objeto['referencia'])){
 				$errores[] = 'La referencia del dispositivo debe ser única y no existente';
 			}
 
 		} else {
 
-			if (strlen($objeto['nombre'] <= 0) {
+			if (strlen($objeto['nombre']) <= 0) {
 				$errores[] = 'El nombre del fabricante no debe estar vacío';
 			}
 
-			if (strlen($objeto['direccion'] <= 0) {
+			if (strlen($objeto['direccion']) <= 0) {
 				$errores[] = 'La dirección del fabricante no debe estar vacía';
 			}
 
