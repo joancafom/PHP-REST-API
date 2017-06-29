@@ -20,7 +20,8 @@
 
 		} catch (PDOException $e) {
 			$_SESSION['excepcion'] = $e->GetMessage(); 
-			header('Location: excepcion.php');
+
+			return null;
 		}
 	}
 
@@ -36,7 +37,8 @@
 
 		} catch (PDOException $e) {
 			$_SESSION['excepcion'] = $e->GetMessage(); 
-			header('Location: excepcion.php');
+			
+			return null;
 		}
 	}
 
@@ -64,7 +66,8 @@
 
 		} catch (PDOException $e) {
 			$_SESSION['excepcion'] = $e->GetMessage(); 
-			header('Location: excepcion.php');
+			
+			return null;
 		}
 	}
 
@@ -88,7 +91,8 @@
 
 		} catch (PDOException $e) {
 			$_SESSION['excepcion'] = $e->GetMessage(); 
-			header('Location: excepcion.php');
+			
+			return false;
 		}
 	}
 
@@ -134,7 +138,7 @@
 		} catch (PDOException $e) {
 			$_SESSION['excepcion'] = $e->GetMessage(); 
 
-			header('Location: excepcion.php');
+			return false;
 		}
 	}
 
@@ -170,7 +174,8 @@
 
 		} catch (PDOException $e) {
 			$_SESSION['excepcion'] = $e->GetMessage(); 
-			header('Location: excepcion.php');
+			
+			return false;
 		}
 	}
 
@@ -195,7 +200,8 @@
 
 		} catch (PDOException $e) {
 			$_SESSION['excepcion'] = $e->GetMessage(); 
-			header('Location: excepcion.php');
+			
+			return false;
 		}
 	}
 
@@ -227,6 +233,98 @@
 			return false;
 		}
 
+
+	}
+
+	function validarRecurso($conexion, $recurso, $objeto){
+
+		$errores = array();
+
+		if ($recurso == 'DISPOSITIVOS') {
+
+			if (strlen($objeto['marca']) <= 0) {
+				$errores[] = 'La marca del dispositivo no debe estar vacía';
+			}
+
+			if (strlen($objeto['nombre']) <= 0) {
+				$errores[] = 'El nombre del dispositivo no debe estar vacío';
+			}
+
+			if (strlen($objeto['color']) <= 0) {
+				$errores[] = 'El color del dispositivo no debe estar vacío';
+			}
+
+			if($objeto['capacidad'] <= 0){
+				$errores[] = 'La capacidad del dispositivo debe ser mayor que 0';
+			}
+
+			if(strlen($objeto['referencia']) != 13 || comprobarExistencia($conexion, $recurso, $objeto['referencia'])){
+
+				if(strlen($objeto['referencia']) != 13){
+					$errores[] = 'La referencia del dispositivo debe tener 13 caracteres';
+				}else{
+					$errores[] = 'La referencia del dispositivo no debe existir previamente';
+				}
+				
+			}
+
+		} else {
+
+			if (strlen($objeto['nombre']) <= 0) {
+				$errores[] = 'El nombre del fabricante no debe estar vacío';
+			}
+
+			if (strlen($objeto['direccion']) <= 0) {
+				$errores[] = 'La dirección del fabricante no debe estar vacía';
+			}
+
+			if (!preg_match('/^[A-Z][A-Z][A-Z]$/', $objeto['pais'])) {
+				$errores[] = 'El país del fabricante debe tener 3 letras mayúsculas';
+			}
+
+			if (!preg_match('/^((\+[0-9][0-9])|(00[0-9][0-9]))?[0-9]{3,15}$/', $objeto['tlf'])) {
+				$errores[] = 'El teléfono del fabricante debe ser válido';
+			}
+
+			if (!preg_match('/^[0-9]{1,8}$/', $objeto['f_oid'])) {
+				$errores[] = 'El identificador del fabricante debe ser un número de 1 a 8 dígitos';
+			}
+
+			if(comprobarExistencia($conexion, $recurso, $objeto['f_oid'])){
+				$errores[] = 'El identificador del fabricante debe ser único y no existente';
+			}
+		}
+
+		return $errores;
+		
+	}
+
+	function comprobarExistencia($conexion, $recurso, $identificador){
+		//SELECT * FROM DISPOSITIVOS WHERE F_OID = (SELECT F_OID FROM FABRICANTES WHERE NOMBRE = 'Apple Inc.') AND REFERENCIA = '1000000000000';
+		//SELECT * FROM FABRICANTES WHERE F_OID = 1 AND  NOMBRE = 'Apple Inc.';
+		try {
+
+			if ($recurso == 'DISPOSITIVOS') {
+				$query = "SELECT * FROM DISPOSITIVOS WHERE REFERENCIA = :identificador";
+			} else {
+				$query = "SELECT * FROM FABRICANTES WHERE F_OID = :identificador";
+			}
+
+			$stmt = $conexion->prepare($query);
+			$stmt->bindParam(':identificador', $identificador);
+			$stmt->execute();
+
+			$res = $stmt->fetch();
+
+			if(!$res){
+				return false;
+			}else{
+				return true;
+			}
+			
+		} catch (PDOException $e) {
+			return true;
+		}
 
 	}
 

@@ -46,4 +46,35 @@
     }
   }
 
+  function validarLimitOffset($limit, $offset){
+
+    $parametrosValidados = array('limit' => 10, 'offset' => 1);
+
+    $offset = is_numeric($offset) ? intval($offset) : 1;
+    $limit = is_numeric($limit) ? intval($limit) : 10;
+
+    if($limit > 0){
+      $parametrosValidados['limit'] = $limit;
+    }
+
+    if($offset > 0){
+      $parametrosValidados['offset'] = $offset;
+    }
+
+    return $parametrosValidados;
+
+  }
+
+  function isValidJSON($str) {
+      json_decode($str);
+      return json_last_error() == JSON_ERROR_NONE;
+  }
+
+  //Terminal Operation, sends a response to the client
+  function replyToClient($parametros = array(), $codigo = 200, $header = array(), $format){
+    $response = new OAuth2\Response($parametros,$codigo,$header);
+    $response->send($format);
+    die();
+  }
+
 ?>

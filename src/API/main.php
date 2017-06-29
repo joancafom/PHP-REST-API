@@ -1,6 +1,7 @@
 <?php
 
 	require_once "../BD/gestionBD.php";
+	require_once "../BD/utilidades.php";
 	require_once "../resources/gestionRecursos.php";
 	require_once "../OAuth2Common/server.php";
 
@@ -171,10 +172,13 @@
 
 				$checker = array(0 => 'referencia',1 => 'marca',2 => 'nombre',3 => 'color',4 => 'capacidad');
 
+				//Cambiamos todos los índices a minúscula para proceder a la comprobación
+				$json = array_change_key_case($json);
+
 				//Comprobamos que el recurso tenga todos los campos necesarios
 				foreach ($json as $key => $value) {
 
-					if(!in_array(strtolower($key), $checker)){
+					if(!in_array($key, $checker)){
 						replyToClient(array('Not a Valid Device'=>'The provided device does not contain all the required fields'),400,array(), 'json');
 						break;
 					}
@@ -292,87 +296,5 @@
 
 
 	}
-
-	function validarRecurso($conexion, $recurso, $objeto){
-
-		$errores = array();
-
-		if ($recurso == 'DISPOSITIVOS') {
-
-			if (strlen($objeto['marca']) <= 0) {
-				$errores[] = 'La marca del dispositivo no debe estar vacía';
-			}
-
-			if (strlen($objeto['nombre']) <= 0) {
-				$errores[] = 'El nombre del dispositivo no debe estar vacío';
-			}
-
-			if (strlen($objeto['color']) <= 0) {
-				$errores[] = 'El color del dispositivo no debe estar vacío';
-			}
-
-			if($objeto['capacidad'] <= 0){
-				$errores[] = 'La capacidad del dispositivo debe ser mayor que 0';
-			}
-
-			if (!preg_match('/^[0-9]{1,8}$/', $objeto['f_oid'])) {
-				$errores[] = 'El identificador del fabricante del dispositivo debe ser un número de 1 a 8 dígitos';
-			}
-
-			if(strlen($objeto['referencia']) != 13 || comprobarExistencia($conexion, $recurso, $objeto['referencia'])){
-				$errores[] = 'La referencia del dispositivo debe ser única y no existente';
-			}
-
-		} else {
-
-			if (strlen($objeto['nombre']) <= 0) {
-				$errores[] = 'El nombre del fabricante no debe estar vacío';
-			}
-
-			if (strlen($objeto['direccion']) <= 0) {
-				$errores[] = 'La dirección del fabricante no debe estar vacía';
-			}
-
-			if (!preg_match('/^[A-Z][A-Z][A-Z]$/', $objeto['pais'])) {
-				$errores[] = 'El país del fabricante debe tener 3 letras mayúsculas';
-			}
-
-			if (!preg_match('/^((\+[0-9][0-9])|(00[0-9][0-9]))?[0-9]{3,15}$/', $objeto['tlf'])) {
-				$errores[] = 'El teléfono del fabricante debe ser válido';
-			}
-
-			if (!preg_match('/^[0-9]{1,8}$/', $objeto['f_oid'])) {
-				$errores[] = 'El identificador del fabricante debe ser un número de 1 a 8 dígitos';
-			}
-
-			if(comprobarExistencia($conexion, $recurso, $objeto['f_oid'])){
-				$errores[] = 'El identificador del fabricante debe ser único y no existente';
-			}
-		}
-
-		return $errores;
-		
-	}
-
-	function validarLimitOffset($limit, $offset){
-
-		$parametrosValidados = array('limit' => 10, 'offset' => 1);
-
-		$offset = is_numeric($offset) ? intval($offset) : 1;
-		$limit = is_numeric($limit) ? intval($limit) : 10;
-
-		if($limit > 0){
-			$parametrosValidados['limit'] = $limit;
-		}
-
-		if($offset > 0){
-			$parametrosValidados['offset'] = $offset;
-		}
-
-		return $parametrosValidados;
-
-	}
-
-
 
 ?>
