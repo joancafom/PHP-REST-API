@@ -52,7 +52,7 @@
        	 	break;
 
     	case 'post':
-        	$res = procesarPost($conexion, $ruta, file_get_contents("php://input"));
+        	$res = procesarPost($conexion, $ruta, file_get_contents("php://input"), $server);
         	break;
     	case 'put':
         	//procesarPut($ruta);
@@ -143,7 +143,7 @@
 
 	}
 
-	function procesarPost($conexion, $ruta, $bodyParams){
+	function procesarPost($conexion, $ruta, $bodyParams, $server){
 
 		/*
 			Se supone que para acceder a esta función al menos hemos tenido que comprobar
@@ -179,7 +179,7 @@
 				}
 
 				//Validamos el contenido de los campos
-				$erroresRecurso = validarRecurso($recurso, $json);
+				$erroresRecurso = validarRecurso($conexion, $recurso, $json);
 
 				if (count($erroresRecurso) == 0) {
 					//Si no hay errores, procedemos a su inserción
@@ -290,10 +290,23 @@
 
 	}
 
-	function validarRecurso($recurso, $objeto){
+	function validarRecurso($conexion, $recurso, $objeto){
+
 		$errores = array();
 
 		if ($recurso == 'DISPOSITIVOS') {
+
+			if (strlen($objeto['marca'] <= 0) {
+				$errores[] = 'La marca del dispositivo no debe estar vacía';
+			}
+
+			if (strlen($objeto['nombre'] <= 0) {
+				$errores[] = 'El nombre del dispositivo no debe estar vacío';
+			}
+
+			if (strlen($objeto['color'] <= 0) {
+				$errores[] = 'El color del dispositivo no debe estar vacío';
+			}
 
 			if($objeto['capacidad'] <= 0){
 				$errores[] = 'La capacidad del dispositivo debe ser mayor que 0';
@@ -303,11 +316,19 @@
 				$errores[] = 'El identificador del fabricante del dispositivo debe ser un número de 1 a 8 dígitos';
 			}
 
-			if(comprobarExistencia($conexion, $recurso, $objeto['referencia'])){
+			if(strlen($objeto['referencia']) <= 0 || comprobarExistencia($conexion, $recurso, $objeto['referencia'])){
 				$errores[] = 'La referencia del dispositivo debe ser única y no existente';
 			}
 
 		} else {
+
+			if (strlen($objeto['nombre'] <= 0) {
+				$errores[] = 'El nombre del fabricante no debe estar vacío';
+			}
+
+			if (strlen($objeto['direccion'] <= 0) {
+				$errores[] = 'La dirección del fabricante no debe estar vacía';
+			}
 
 			if (!preg_match('/^[A-Z][A-Z][A-Z]$/', $objeto['pais'])) {
 				$errores[] = 'El país del fabricante debe tener 3 letras mayúsculas';
@@ -325,6 +346,8 @@
 				$errores[] = 'El identificador del fabricante debe ser único y no existente';
 			}
 		}
+
+		return $errores;
 		
 	}
 

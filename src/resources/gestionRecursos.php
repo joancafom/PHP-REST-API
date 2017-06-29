@@ -72,8 +72,14 @@
 
 		$consulta = "INSERT INTO ".$recurso." VALUES ( ";
 
+		$tam = count($objeto);
 		foreach ($objeto as $key => $value) {
-			$consulta = $consulta.":".$key.", ";
+			$tam = $tam - 1;
+			$consulta = $consulta.":".$key;
+
+			if ($tam != 1) {
+				$consulta .= ", ";
+			}
 		}
 
 		$consulta .= ')';
