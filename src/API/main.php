@@ -251,50 +251,7 @@
 
 			replyToClient(array(),400,array(), 'html');
 		}
-		
-
-	}
-
-	function isValidJSON($str) {
-   		json_decode($str);
-   		return json_last_error() == JSON_ERROR_NONE;
-	}
-
-	//Terminal Operation, sends a response to the client
-	function replyToClient($parametros = array(), $codigo = 200, $header = array(), $format){
-		$response = new OAuth2\Response($parametros,$codigo,$header);
-	 	$response->send($format);
-	 	die();
-	}
-
-	function comprobarExistencia($conexion, $recurso, $identificador){
-		//SELECT * FROM DISPOSITIVOS WHERE F_OID = (SELECT F_OID FROM FABRICANTES WHERE NOMBRE = 'Apple Inc.') AND REFERENCIA = '1000000000000';
-		//SELECT * FROM FABRICANTES WHERE F_OID = 1 AND  NOMBRE = 'Apple Inc.';
-		try {
-
-			if ($recurso == 'DISPOSITIVOS') {
-				$query = "SELECT * FROM DISPOSITIVOS WHERE REFERENCIA = :identificador";
-			} else {
-				$query = "SELECT * FROM FABRICANTES WHERE F_OID = :identificador";
-			}
-
-			$stmt = $conexion->prepare($query);
-			$stmt->bindParam(':identificador', $identificador);
-			$stmt->execute();
-
-			$res = $stmt->fetch();
-
-			if(!$res){
-				return false;
-			}else{
-				return true;
-			}
-			
-		} catch (PDOException $e) {
-			return true;
-		}
-
-
+	
 	}
 
 ?>
