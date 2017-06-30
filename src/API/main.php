@@ -262,7 +262,7 @@
 				//Obtenemos el usuario correspondiente al token
 				$token = $server->getAccessTokenData(OAuth2\Request::createFromGlobals());
 
-				$checker = $recurso == 'DISPOSITIVOS' ? array(0 => 'marca', 1 => 'nombre', 2 => 'color', 3 => 'capacidad') : array(0 => 'nombre', 1 => 'direccion', 2 => 'tlf', 3 => 'pais') ;
+				$checker = $recurso == 'DISPOSITIVOS' ? array(0 => 'marca', 1 => 'nombre', 2 => 'color', 3 => 'capacidad', 4 => 'referencia') : array(0 => 'nombre', 1 => 'direccion', 2 => 'tlf', 3 => 'pais') ;
 
 				//Cambiamos todos los índices a minúscula para proceder a la comprobación
 				$json = array_change_key_case($json);
@@ -289,7 +289,18 @@
 	 					replyToClient(array('Authoritation Error' => 'You have no privileges to access to this resource'),403,array(), 'json');
 	 				}
 
-					return actualizaRecurso($conexion, $recurso, $json, $token['USER_ID']);
+	 				if ($recurso == 'DISPOSITIVOS') {
+
+	 					$identificador = $json['referencia'];
+	 					unset($json['referencia']);
+
+	 				} else {
+
+	 					$identificador = $token['USER_ID'];			
+	 					
+	 				}
+	 				
+					return actualizaRecurso($conexion, $recurso, $json, $identificador);
 
 				}else{
 

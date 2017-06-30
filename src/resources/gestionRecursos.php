@@ -71,6 +71,26 @@
 		}
 	}
 
+	function consultaFOID($conexion, $nombre){
+
+		$consulta = "SELECT F_OID FROM FABRICANTES WHERE NOMBRE = :nombre";
+
+		try {
+
+			$stmt = $conexion->prepare($consulta);
+			$stmt->bindParam(':nombre', $nombre);
+			$stmt->execute();
+
+			//Devolvemos sólo el único resultado
+			return $stmt->fetch(PDO::FETCH_ASSOC);
+
+		} catch (PDOException $e) {
+			$_SESSION['excepcion'] = $e->GetMessage(); 
+			
+			return null;
+		}
+	}
+
 	function creaDispositivo($conexion, $dispositivo, $user_id){
 
 		$consulta = "INSERT INTO DISPOSITIVOS (MARCA, NOMBRE, COLOR, CAPACIDAD, F_OID, REFERENCIA) VALUES (:marca, :nombre, :color, :capacidad, (SELECT F_OID FROM FABRICANTES WHERE NOMBRE = :user_id), :referencia)";
@@ -147,7 +167,7 @@
 		if($recurso == 'DISPOSITIVOS'){
 			$cell = 'REFERENCIA';
 		}else{
-			$cell = 'F_OID';
+			$cell = 'NOMBRE';
 		}
 
 		$consulta = "UPDATE ".$recurso." SET ";
@@ -163,7 +183,7 @@
 			$stmt = $conexion->prepare($consulta);
 
 			foreach ($objeto as $key => $value) {
-				$stmt->bindParam(':'.$key, $objeto[$key];
+				$stmt->bindParam(':'.$key, $objeto[$key]);
 			}
 
 			$stmt->bindParam(':clave', $clave);
@@ -258,7 +278,7 @@
 				$errores[] = 'La capacidad del dispositivo debe ser mayor que 0';
 			}
 
-			if(strlen($objeto['referencia']) != 13 || comprobarExistencia($conexion, $recurso, $objeto['referencia'])){
+			if(strlen($objeto['referencia']) != 13 || comprobarExistencia($conexion, $recurso, 'REFERENCIA' , $objeto['referencia'])){
 
 				if(strlen($objeto['referencia']) != 13){
 					$errores[] = 'La referencia del dispositivo debe tener 13 caracteres';
@@ -286,12 +306,12 @@
 				$errores[] = 'El teléfono del fabricante debe ser válido';
 			}
 
-			if (!preg_match('/^[0-9]{1,8}$/', $objeto['f_oid'])) {
-				$errores[] = 'El identificador del fabricante debe ser un número de 1 a 8 dígitos';
+			if(comprobarExistencia($conexion, $recurso, 'NOMBRE', $objeto['nombre'])){
+				$errores[] = 'El nombre del fabricante no debe existir previamente';
 			}
 
-			if(comprobarExistencia($conexion, $recurso, $objeto['f_oid'])){
-				$errores[] = 'El identificador del fabricante debe ser único y no existente';
+			if(comprobarExistencia($conexion, $recurso, 'TLF', $objeto['tlf'])){
+				$errores[] = 'El tlf del fabricante no debe existir previamente';
 			}
 		}
 
@@ -299,16 +319,12 @@
 		
 	}
 
-	function comprobarExistencia($conexion, $recurso, $identificador){
+	function comprobarExistencia($conexion, $recurso, $cell, $identificador){
 		//SELECT * FROM DISPOSITIVOS WHERE F_OID = (SELECT F_OID FROM FABRICANTES WHERE NOMBRE = 'Apple Inc.') AND REFERENCIA = '1000000000000';
 		//SELECT * FROM FABRICANTES WHERE F_OID = 1 AND  NOMBRE = 'Apple Inc.';
 		try {
 
-			if ($recurso == 'DISPOSITIVOS') {
-				$query = "SELECT * FROM DISPOSITIVOS WHERE REFERENCIA = :identificador";
-			} else {
-				$query = "SELECT * FROM FABRICANTES WHERE F_OID = :identificador";
-			}
+			$query = "SELECT * FROM ".$recurso." WHERE ".$cell." = :identificador";
 
 			$stmt = $conexion->prepare($query);
 			$stmt->bindParam(':identificador', $identificador);
