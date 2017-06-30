@@ -42,7 +42,7 @@
 		}
 	}
 
-	function consultaRecurso($conexion, $recurso, $key){
+	function consultaRecurso($conexion, $recurso, $key, $columns = '*'){
 
 		//Determinamos a qué recurso estamos accediendo, y elegimos la tabla
 		//que referencia a la $key
@@ -53,7 +53,7 @@
 			$cell = 'F_OID';
 		}
 
-		$consulta = "SELECT * FROM ".$recurso." WHERE ".$cell." = :key";
+		$consulta = "SELECT ".$columns." FROM ".$recurso." WHERE ".$cell." = :key";
 
 		try {
 
