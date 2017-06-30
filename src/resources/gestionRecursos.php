@@ -171,12 +171,20 @@
 		}
 
 		$consulta = "UPDATE ".$recurso." SET ";
+		$tam = count($objeto);
 
 		foreach ($objeto as $key => $value) {
-			$consulta = $consulta.strtoupper($key).' = '.':'.$key.', ';
+			$tam = $tam - 1;
+
+			$consulta = $consulta.strtoupper($key).' = '.':'.$key;
+
+			if ($tam != 0) {
+				$consulta .= ", ";
+			}
+
 		}
 
-		$consulta .= 'WHERE '. $cell . ' = :clave';
+		$consulta .= ' WHERE '. $cell . ' = :clave';
 		
 		try {
 

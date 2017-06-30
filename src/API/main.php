@@ -232,7 +232,7 @@
 		
 	}
 
-	function procesarUpdate($conexion, $ruta, $bodyParams, $server){
+	function procesarPut($conexion, $ruta, $bodyParams, $server){
 
 		//Verificamos en primer lugar que el formato de entrada es JSON mediante el atributo Content-Type del header
 
