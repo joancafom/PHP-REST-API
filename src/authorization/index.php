@@ -26,12 +26,8 @@
       if(isset($erroresLogin)){
 
         echo "<header>";
-
-        foreach ($erroresLogin as $error) {
           
-          echo $error;
-
-        }
+        echo $erroresLogin;
 
         echo "</header>";
 

@@ -1,14 +1,35 @@
 <html lang="es">
   <head>
+      <style type="text/css">
+
+      body{
+        font-family: "Verdana";
+        font-size: 15;
+      }
+      .pCentrado{
+        text-align: center;
+      }
+      .authDiv {
+        width: 50%;
+        margin: 0 auto;
+        margin-top: 10%;
+        min-width: 261px;
+        padding: 10px;
+      }
+
+    </style>
     <meta charset="utf-8"/>
     <title>Joscarfom - Token Temporal de Acceso</title>
   </head>
   <body>
     <main>
-      <p>¡Bienvenido USER! Su token temporal de acceso es:</p>
-      <p>TOKEN</p>
+      <div class="authDiv">
+      <p class="pCentrado">¡Bienvenido USER!</p>
+      <p>Su token temporal de acceso es:</p>
+      <p class="pCentrado">TOKEN</p>
       <p>Este token es válido hasta:</p>
-      <p>EXPIRATION DATE</p>
+      <p class="pCentrado">EXPIRATION DATE</p>
+    </div>
   </main>
   </body>
 </html>

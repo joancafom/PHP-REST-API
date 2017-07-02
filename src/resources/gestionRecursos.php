@@ -2,12 +2,12 @@
 
 	require_once '../BD/utilidades.php';
 
-	function consultaRecursosPaginado($conexion, $recurso, $offset, $limit){
+	function consultaRecursosPaginado($conexion, $recurso, $offset, $limit, $columns = '*'){
 
 		//No necesitamos hacer un bindParam() ya que sólo se llegará aquí tras comprobar
 		//que el recurso es uno de los disponibles
 
-		$consulta = "SELECT * FROM ". $recurso;
+		$consulta = "SELECT ".$columns." FROM ". $recurso;
 
 		try {
 
@@ -16,11 +16,22 @@
 
 			$total_consulta = total_consulta($conexion,$consulta,null,null);
 
-      		return array(0 => array('Resultados: ' => $total_consulta), 1 => $stmt->fetchAll(PDO::FETCH_ASSOC));
+			$res = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+			//Contamos cuantos recursos han sido devueltos
+			$contador = ($res == null) ? 0 : count($res);
+			
+			//1-> El total de recursos en la BD
+			//2-> Los recursos devueltos
+			$info = array('Total Recursos' => intval($total_consulta), 'Resultados Consulta' => $contador);
+
+      		return array(0 => $info, 1 => $res);
 
 		} catch (PDOException $e) {
+			//Para facilitar la depuración guardamos un atributo en sesión con el error
 			$_SESSION['excepcion'] = $e->GetMessage(); 
-
+			
+			//Si se produce una excepción, por precaución devolveremos null
 			return null;
 		}
 	}
@@ -36,37 +47,44 @@
 			return $resultado;
 
 		} catch (PDOException $e) {
+			//Para facilitar la depuración guardamos un atributo en sesión con el error
 			$_SESSION['excepcion'] = $e->GetMessage(); 
 			
+			//Si se produce una excepción, por precaución devolveremos null
 			return null;
 		}
 	}
 
-	function consultaRecurso($conexion, $recurso, $key, $columns = '*'){
+	function consultaRecurso($conexion, $recurso, $identificador, $columns = '*'){
 
-		//Determinamos a qué recurso estamos accediendo, y elegimos la tabla
-		//que referencia a la $key
+		//Escogemos el atributo por el que filtrar dependiendo del recurso
+		$cell = ($recurso == 'DISPOSITIVOS') ? 'REFERENCIA' : 'F_OID' ;
 
-		if($recurso == 'DISPOSITIVOS'){
-			$cell = 'REFERENCIA';
-		}else{
-			$cell = 'F_OID';
-		}
-
-		$consulta = "SELECT ".$columns." FROM ".$recurso." WHERE ".$cell." = :key";
+		$consulta = "SELECT ".$columns." FROM ".$recurso." WHERE ".$cell." = :identificador";
 
 		try {
 
 			$stmt = $conexion->prepare($consulta);
-			$stmt->bindParam(':key', $key);
+			$stmt->bindParam(':identificador', $identificador);
 			$stmt->execute();
 
-			//Devolvemos sólo el único resultado
-			return $stmt->fetch(PDO::FETCH_ASSOC);
+			$res = $stmt->fetch(PDO::FETCH_ASSOC);
+			$total_consulta = total_consulta($conexion,"SELECT * FROM ". $recurso,null,null);
+
+			//Contamos cuantos recursos han sido devueltos
+			$contador = ($res == null) ? 0 : 1;
+			
+			//1-> El total de recursos en la BD
+			//2-> Los recursos devueltos
+			$info = array('Total Recursos' => intval($total_consulta), 'Resultados Consulta' => $contador);
+
+      		return array(0 => $info, 1 => $res);
 
 		} catch (PDOException $e) {
+			//Para facilitar la depuración guardamos un atributo en sesión con el error
 			$_SESSION['excepcion'] = $e->GetMessage(); 
 			
+			//Si se produce una excepción, por precaución devolveremos null
 			return null;
 		}
 	}
@@ -81,19 +99,21 @@
 			$stmt->bindParam(':nombre', $nombre);
 			$stmt->execute();
 
-			//Devolvemos sólo el único resultado
+			//Devolvemos sólo el único resultado, en forma de array asociativo
 			return $stmt->fetch(PDO::FETCH_ASSOC);
 
 		} catch (PDOException $e) {
+			//Para facilitar la depuración guardamos un atributo en sesión con el error
 			$_SESSION['excepcion'] = $e->GetMessage(); 
 			
+			//Si se produce una excepción, por precaución devolveremos null
 			return null;
 		}
 	}
 
-	function creaDispositivo($conexion, $dispositivo, $user_id){
+	function creaDispositivo($conexion, $dispositivo, $f_oid){
 
-		$consulta = "INSERT INTO DISPOSITIVOS (MARCA, NOMBRE, COLOR, CAPACIDAD, F_OID, REFERENCIA) VALUES (:marca, :nombre, :color, :capacidad, (SELECT F_OID FROM FABRICANTES WHERE NOMBRE = :user_id), :referencia)";
+		$consulta = "INSERT INTO DISPOSITIVOS (MARCA, NOMBRE, COLOR, CAPACIDAD, F_OID, REFERENCIA) VALUES (:marca, :nombre, :color, :capacidad, :f_oid, :referencia)";
 
 		try {
 
@@ -102,16 +122,18 @@
 			$stmt->bindParam(':nombre', $dispositivo['nombre']);
 			$stmt->bindParam(':color', $dispositivo['color']);
 			$stmt->bindParam(':capacidad', $dispositivo['capacidad']);
-			$stmt->bindParam(':user_id', $user_id);
+			$stmt->bindParam(':f_oid', $f_oid);
 			$stmt->bindParam(':referencia', $dispositivo['referencia']);
-			$stmt->execute();
+			$res = $stmt->execute();
 
-			//Devolvemos sólo el único resultado
-			return true;
+			// Execute devuelve TRUE o FALSE en caso de error
+			return $res;
 
 		} catch (PDOException $e) {
+			//Para facilitar la depuración guardamos un atributo en sesión con el error
 			$_SESSION['excepcion'] = $e->GetMessage(); 
 			
+			//Si se produce una excepción, por precaución devolveremos FALSE
 			return false;
 		}
 	}
@@ -120,6 +142,7 @@
 
 		$consulta = "INSERT INTO ".$recurso." ";
 
+		//El tamaño del objeto. Usado para construir la consulta
 		$tam = count($objeto);
 		
 		$aux1 = '( ';
@@ -150,30 +173,32 @@
 				$stmt->bindParam(':'.$key, $objeto[$key]);
 			}
 
-			$stmt->execute();
+			$res = $stmt->execute();
 
-			//Devolvemos sólo el único resultado
-			return true;
+			//Devolvemos el resultado de la operación
+			return $res;
 
 		} catch (PDOException $e) {
+			//Para facilitar la depuración guardamos un atributo en sesión con el error
 			$_SESSION['excepcion'] = $e->GetMessage(); 
-
+			
+			//Si se produce una excepción, por precaución devolveremos FALSE
 			return false;
 		}
 	}
 
-	function actualizaRecurso($conexion, $recurso, $objeto, $clave){
+	function actualizaRecurso($conexion, $recurso, $objeto, $identificador){
 
-		if($recurso == 'DISPOSITIVOS'){
-			$cell = 'REFERENCIA';
-		}else{
-			$cell = 'NOMBRE';
-		}
+		//Escogemos el atributo por el que filtrar dependiendo del recurso
+		$cell = ($recurso == 'DISPOSITIVOS') ? 'REFERENCIA' : 'F_OID' ;
 
 		$consulta = "UPDATE ".$recurso." SET ";
+
+		//Tamaño del array de los objetos. Usado para la construcción de la consulta
 		$tam = count($objeto);
 
 		foreach ($objeto as $key => $value) {
+
 			$tam = $tam - 1;
 
 			$consulta = $consulta.strtoupper($key).' = '.':'.$key;
@@ -184,7 +209,7 @@
 
 		}
 
-		$consulta .= ' WHERE '. $cell . ' = :clave';
+		$consulta .= ' WHERE '. $cell . ' = :identificador';
 		
 		try {
 
@@ -194,26 +219,26 @@
 				$stmt->bindParam(':'.$key, $objeto[$key]);
 			}
 
-			$stmt->bindParam(':clave', $clave);
-			$stmt->execute();
+			$stmt->bindParam(':identificador', $identificador);
+			$res = $stmt->execute();
 
-			//Devolvemos sólo el único resultado
-			return true;
+			//Devolvemos el resultado de la operación
+			return $res;
 
 		} catch (PDOException $e) {
+
+			//Para facilitar la depuración guardamos un atributo en sesión con el error
 			$_SESSION['excepcion'] = $e->GetMessage(); 
 			
+			//Si se produce una excepción, por precaución devolveremos FALSE
 			return false;
 		}
 	}
 
 	function eliminaRecurso($conexion, $recurso, $key){
 
-		if($recurso == 'DISPOSITIVOS'){
-			$cell = 'REFERENCIA';
-		}else{
-			$cell = 'F_OID';
-		}
+		//Escogemos el atributo por el que filtrar dependiendo del recurso
+		$cell = ($recurso == 'DISPOSITIVOS') ? 'REFERENCIA' : 'F_OID' ;
 
 		$consulta = "DELETE FROM ".$recurso." WHERE ".$cell." = :key";
 
@@ -221,50 +246,76 @@
 
 			$stmt = $conexion->prepare($consulta);
 			$stmt->bindParam(':key', $key);
-			$stmt->execute();
+			$res = $stmt->execute();
 
-			//Devolvemos sólo el único resultado
-			return true;
+			//Devolvemos el resultado de la operación
+			return $res;
 
 		} catch (PDOException $e) {
+
+			//Para facilitar la depuración guardamos un atributo en sesión con el error
 			$_SESSION['excepcion'] = $e->GetMessage(); 
 			
+			//Si se produce una excepción, por precaución devolveremos FALSE
 			return false;
 		}
 	}
 
 	function verifyPrivileges($conexion, $user_id, $recurso, $identificador){
-		//SELECT * FROM DISPOSITIVOS WHERE F_OID = (SELECT F_OID FROM FABRICANTES WHERE NOMBRE = 'Apple Inc.') AND REFERENCIA = '1000000000000';
-		//SELECT * FROM FABRICANTES WHERE F_OID = 1 AND  NOMBRE = 'Apple Inc.';
-		try {
 
-			if ($recurso == 'DISPOSITIVOS') {
-				$query = "SELECT * FROM DISPOSITIVOS WHERE F_OID = (SELECT F_OID FROM FABRICANTES WHERE NOMBRE = :user_id) AND REFERENCIA = :identificador";
-			} else {
-				$query = "SELECT * FROM FABRICANTES WHERE F_OID = :identificador AND  NOMBRE = :user_id";
-			}
+		//Identificamos el recurso que estamos intentando acceder.
+		if ($recurso == 'DISPOSITIVOS') {
 
-			$stmt = $conexion->prepare($query);
-			$stmt->bindParam(':user_id', $user_id);
-			$stmt->bindParam(':identificador', $identificador);
-			$stmt->execute();
+			//Estamos intentanto acceder a DISPOSITIVOS
 
-			$res = $stmt->fetch();
+			$query = "SELECT * FROM DISPOSITIVOS WHERE F_OID = :user_id AND REFERENCIA = :identificador";
 
-			if(!$res){
+			try {
+				
+				$stmt = $conexion->prepare($query);
+				$stmt->bindParam(':user_id', $user_id);
+				$stmt->bindParam(':identificador', $identificador);
+				$stmt->execute();
+
+				//Devolvemos el primer (y único) resultado
+				$res = $stmt->fetch();
+
+				//Si $res = null (no hay ninguna coincidencia) será porque no tiene privilegios
+				if(!$res){
+					return false;
+				}else{
+					return true;
+				}
+
+			} catch (PDOException $e) {
+
+				//Para facilitar la depuración guardamos un atributo en sesión con el error
+				$_SESSION['excepcion'] = $e->GetMessage(); 
+				
+				//Si algo saliera mal, por precaución devolveremos que no se tienen privilegios
 				return false;
-			}else{
-				return true;
 			}
-			
-		} catch (PDOException $e) {
-			return false;
-		}
 
+		} else {
+			
+			//Estamos intentando acceder a FABRICANTES
+
+			//Para ello comprobaremos que la F_OID a la que estamos intentando acceder es la misma que la del token
+
+			return $user_id == $identificador;
+		}
 
 	}
 
-	function validarRecurso($conexion, $recurso, $objeto){
+
+	function validarRecurso($conexion, $recurso, $objeto, $opinfo){
+
+		/*
+			El argumento $opinfo puede contener dos valores y nos ayuda a identificar
+			la operación que está siendo realizada. Si la operación es un POST, el valor contenido
+			será 'POST'. En caso de ser un PUT, contendrá el valor del identificador del objeto, que
+			será usado para las comprobaciones.
+		*/
 
 		$errores = array();
 
@@ -286,10 +337,12 @@
 				$errores[] = 'La capacidad del dispositivo debe ser mayor que 0';
 			}
 
-			if(strlen($objeto['referencia']) != 13 || comprobarExistencia($conexion, $recurso, 'REFERENCIA' , $objeto['referencia'])){
+			if(isset($objeto['referencia']) && (strlen($objeto['referencia']) != 13 || !is_numeric($objeto['referencia']) || comprobarExistencia($conexion, $recurso, 'REFERENCIA' , $objeto['referencia']))){
 
 				if(strlen($objeto['referencia']) != 13){
 					$errores[] = 'La referencia del dispositivo debe tener 13 caracteres';
+				}elseif (!is_numeric($objeto['referencia'])) {
+					$errores[] = 'La referencia del dispositivo debe ser numérica';
 				}else{
 					$errores[] = 'La referencia del dispositivo no debe existir previamente';
 				}
@@ -307,18 +360,25 @@
 			}
 
 			if (!preg_match('/^[A-Z][A-Z][A-Z]$/', $objeto['pais'])) {
-				$errores[] = 'El país del fabricante debe tener 3 letras mayúsculas';
+				$errores[] = 'El país del fabricante debe ser 3 letras mayúsculas';
 			}
 
 			if (!preg_match('/^((\+[0-9][0-9])|(00[0-9][0-9]))?[0-9]{3,15}$/', $objeto['tlf'])) {
 				$errores[] = 'El teléfono del fabricante debe ser válido';
 			}
 
-			if(comprobarExistencia($conexion, $recurso, 'NOMBRE', $objeto['nombre'])){
-				$errores[] = 'El nombre del fabricante no debe existir previamente';
+			/*
+				En el caso de un PUT en el que el valor no sea actualizado, cuando se comprueba la existencia
+				del valor a actualizar el resultado será verdadero. Para evitar esto, debemos añadir a la sentencia
+				SQL la PK del propio recurso ($opinfo) y añadir la condición de que sea otro recurso distinto. 
+				En el caso de un POST, esta restricción no afecta pues el valor de $opinfo será 'POST', y la PK de un
+				fabricante es numérica, por lo que queda garantizado que siempre será diferente y la restricción no afectará.
+			*/
+			if (comprobarExistencia($conexion, $recurso, 'NOMBRE', $objeto['nombre'], $opinfo)) {
+					$errores[] = 'El nombre del fabricante no debe existir previamente';
 			}
 
-			if(comprobarExistencia($conexion, $recurso, 'TLF', $objeto['tlf'])){
+			if(comprobarExistencia($conexion, $recurso, 'TLF', $objeto['tlf'], $opinfo)){
 				$errores[] = 'El tlf del fabricante no debe existir previamente';
 			}
 		}
@@ -327,15 +387,23 @@
 		
 	}
 
-	function comprobarExistencia($conexion, $recurso, $cell, $identificador){
-		//SELECT * FROM DISPOSITIVOS WHERE F_OID = (SELECT F_OID FROM FABRICANTES WHERE NOMBRE = 'Apple Inc.') AND REFERENCIA = '1000000000000';
-		//SELECT * FROM FABRICANTES WHERE F_OID = 1 AND  NOMBRE = 'Apple Inc.';
-		try {
+	function comprobarExistencia($conexion, $recurso, $campo, $key, $identificador = ''){
 
-			$query = "SELECT * FROM ".$recurso." WHERE ".$cell." = :identificador";
+		try {
+			
+			$query = "SELECT * FROM ".$recurso." WHERE ".$campo." = :key";
+
+			if ($recurso == 'FABRICANTES') {
+				$query .=  " AND F_OID <> :identificador";
+			}
 
 			$stmt = $conexion->prepare($query);
-			$stmt->bindParam(':identificador', $identificador);
+			$stmt->bindParam(':key', $key);
+
+			if ($recurso == 'FABRICANTES') {
+				$stmt->bindParam(':identificador', $identificador);
+			}
+
 			$stmt->execute();
 
 			$res = $stmt->fetch();
@@ -347,6 +415,11 @@
 			}
 			
 		} catch (PDOException $e) {
+
+			//Para facilitar la depuración guardamos un atributo en sesión con el error
+			$_SESSION['excepcion'] = $e->GetMessage(); 
+			
+			//Si se produce una excepción, por precaución devolveremos TRUE
 			return true;
 		}
 

@@ -41,14 +41,14 @@
   cerrarConexionBD($conexion);
 
   //Comprobomos que el id del fabricante ha sido obtenido con éxito
-  if($idFabricante == null){
+  if(!isset($idFabricante['F_OID']) || $idFabricante['F_OID'] == null){
     $_SESSION['erroresLogin'] = '<p>Ha ocurrido un error al intentar obtener la identifición de este usuario.</p>';
     header('Location: index.php');
     die();
   }
 
   //Llamamos al archivo que se encarga de obtener los tokens con las credenciales y la id
-  $resultado = performCurlCommand($clientId, $clientSecret, $idFabricante);
+  $resultado = performCurlCommand($clientId, $clientSecret, $idFabricante['F_OID']);
 
   //Comprobamos la validez del resultado de la petición cURL
   if($resultado == null){
