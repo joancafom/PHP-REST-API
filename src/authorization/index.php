@@ -18,6 +18,7 @@
   <head>
     <meta charset="utf-8"/>
     <title>Joscarfom - Obtener Autorización</title>
+    <link rel="stylesheet" type="text/css" href="css/index.css">
   </head>
   <body>
 
@@ -36,14 +37,17 @@
     ?>
 
     <main>
-      <p>Inicia sesión para obtener un token temporal</p>
-      <form action="obtainToken.php" method="get">
-        <label for="nombreFabricante">Usuario:</label>
-        <input id="nombreFabricante" name="nombreFabricante" type="text" value="<?php echo $nombreFabricante; ?>">
-        <label for="password">Contraseña:</label>
-        <input id="password" name="password" type="password">
+      <div class="authDiv">
+      <img src="img/key.png" alt="Key Logo">
+      <form class="authForm" action="obtainToken.php" method="post">
+        <p>Inicia sesión para obtener un token temporal</p>
+        <div class="inputsDiv">
+        <input id="user" name="nombreFabricante" type="text" placeholder="Fabricante" autofocus>
+        <input id="password" name="password" type="password" placeholder="Contraseña">
+        </div>
         <button type="submit">Iniciar Sesión</button>
       </form>
+    </div>
   </main>
   </body>
 </html>

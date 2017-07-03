@@ -1,0 +1,14 @@
+body{
+  font-family: "Verdana";
+  font-size: 15;
+}
+.pCentrado{
+  text-align: center;
+}
+.authDiv {
+  width: 50%;
+  margin: 0 auto;
+  margin-top: 10%;
+  min-width: 261px;
+  padding: 10px;
+}

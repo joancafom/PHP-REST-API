@@ -1,5 +1,7 @@
 <?php
 
+	require_once "utilidades.php";
+
 	function crearConexionBD()
 	{
 		$host = "oci:dbname=localhost/XE;charset=UTF8";
@@ -16,7 +18,7 @@
 		}catch(PDOException $e){
 
 			$_SESSION['excepcion'] = $e->GetMessage();
-			header("Location: excepcion.php");
+			replyToClient(array(),500,array(), 'html');
 
 		}
 	}
