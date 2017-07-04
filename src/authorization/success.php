@@ -24,7 +24,7 @@
       <p class="pCentrado">¡Bienvenido <?php echo $user; ?>!</p>
       <p>Su token temporal de acceso es:</p>
       <p class="pCentrado"><?php echo $token['access_token']; ?></p>
-      <p>Este token es válido hasta:</p>
+      <p>Este token es válido durante:</p>
       <p class="pCentrado"><?php echo ($token['expires_in']/60).' minutos'; ?></p>
     </div>
   </main>

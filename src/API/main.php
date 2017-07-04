@@ -222,7 +222,7 @@
 				}
 
 				//Validamos el contenido de los campos
-				//REVISAR POST
+				
 				$erroresRecurso = validarRecurso($conexion, $recurso, $json, 'POST');
 
 				if (count($erroresRecurso) == 0) {
