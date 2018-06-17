@@ -1,13 +1,9 @@
 # PHP-REST-API
-A basic PHP RESTful web service with OAuth2.0 
+Basic PHP RESTful web service supporting OAuth2.0 
 
-This project consist on a PHP server for a basic implementation of a RESTful API. In addition, 
-OAuth2.0 is provided using the tools provided by bshaffer (https://github.com/bshaffer/oauth2-server-php) in order to 
-authenticate users when C/U/D requests are performed.
+This project consists of a basic PHP server that supports RESTful API calls. The web standard authoritation protocol, OAuth2.0, is also supported by means of the tools provided by <a href="https://github.com/bshaffer">Brent Shaffer</a> (https://github.com/bshaffer/oauth2-server-php). This comes handy when only restricted users can perform certain C/U/D requests (Create/Update/Delete). 
 
 # PHP-REST-API
-Un servicio  web RESTful básico con PHP y OAuth2.0
+Servicio web RESTful PHP básico que soporta OAuth2.0
 
-Este proyecto consiste en un servidor PHP para la implementación de una API RESTful básica. Además, se proporciona OAuth2.0 
-usando las herramientas de bshaffer (https://github.com/bshaffer/oauth2-server-php) para autenticar usuarios cuando
-se realizan peticiones C/U/D .
+Este proyecto consiste en un servidor PHP básico que soporta llamadas a una API RESTful. Se soporta además el estándar web para gestionar autenticación, OAuth2.0, gracias a las herramientas proporcionadas por <a href="https://github.com/bshaffer">Brent Shaffer</a> (https://github.com/bshaffer/oauth2-server-php). Esto resulta de especial interés cuando sólo usuarios restringidos pueden realizar ciertas operaciones C/A/B (Creación/Actualización/Borrado). 
